@@ -155,6 +155,7 @@ const Members = () => {
         
 
       </div>
+    </div>
   )
 
   return (
@@ -427,4 +428,4 @@ const Members = () => {
   )
 }
 
-export default Members
+export default Members;

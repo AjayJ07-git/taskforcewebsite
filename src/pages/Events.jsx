@@ -231,7 +231,7 @@ const Events = () => {
               Events & Activities
             </h1>
             <p className="text-xl md:text-2xl max-w-3xl mx-auto">
-              Join us for exciting running events, training sessions, and competitions throughout the year
+              Join us for exciting events, activities, and competitions throughout the year
             </p>
           </div>
         </div>
@@ -317,7 +317,7 @@ const Events = () => {
               <div className="text-center mb-12">
                 <h2 className="text-3xl font-bold text-gray-900 mb-4">Regular Activities</h2>
                 <p className="text-xl text-gray-600">
-                  Join our regular training sessions and activities throughout the week
+                  Join our regular activities and sessions throughout the week
                 </p>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">

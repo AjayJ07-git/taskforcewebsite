@@ -1,6 +1,9 @@
 import React, { useState } from 'react'
+import { supabase } from '../utils/supabaseClient'
 
 const Induction = () => {
+  const [submitStatus, setSubmitStatus] = useState(null) // null | 'success' | 'error'
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -38,30 +41,59 @@ const Induction = () => {
     })
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     
     // Validate preferences
     if (formData.preferences.length === 0) {
-      alert('Please select at least one team preference.')
+      setSubmitStatus('error')
       return
     }
     
-    // Handle form submission here
-    console.log('Induction form submitted:', formData)
-    alert('Thank you for your application! We will review your submission and get back to you soon.')
-    // Reset form
-    setFormData({
-      name: '',
-      phone: '',
-      rollNo: '',
-      department: '',
-      preferences: [],
-      studentLifeEasier: '',
-      leadershipExperience: '',
-      eventSuggestion: '',
-      taskforceMeaning: ''
-    })
+    setIsSubmitting(true)
+    setSubmitStatus(null)
+    
+    try {
+      // Submit to Supabase
+      const { error } = await supabase.from('induction_forms').insert({
+        name: formData.name,
+        phone: formData.phone,
+        roll_no: formData.rollNo,
+        department: formData.department,
+        pref1: formData.preferences[0] ?? null,
+        pref2: formData.preferences[1] ?? null,
+        pref3: formData.preferences[2] ?? null,
+        student_life_easier: formData.studentLifeEasier,
+        leadership_experience: formData.leadershipExperience,
+        event_suggestion: formData.eventSuggestion,
+        taskforce_meaning: formData.taskforceMeaning
+      })
+
+      if (error) {
+        console.error('Supabase error:', error)
+        setSubmitStatus('error')
+        return
+      }
+
+      setSubmitStatus('success')
+      // Reset form
+      setFormData({
+        name: '',
+        phone: '',
+        rollNo: '',
+        department: '',
+        preferences: [],
+        studentLifeEasier: '',
+        leadershipExperience: '',
+        eventSuggestion: '',
+        taskforceMeaning: ''
+      })
+    } catch (error) {
+      console.error('Error submitting form:', error)
+      setSubmitStatus('error')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const departments = [
@@ -95,7 +127,8 @@ const Induction = () => {
               Deputy Member Induction
             </h1>
             <p className="text-xl md:text-2xl max-w-3xl mx-auto">
-              Ready to make student life easier? Apply to become a Taskforce deputy member!
+              Ready to make student life easier? 
+              <br/>Apply to become a Taskforce deputy member!
             </p>
           </div>
         </div>
@@ -324,11 +357,45 @@ const Induction = () => {
               <div className="text-center">
                 <button
                   type="submit"
-                  className="btn-primary px-12 py-4 text-lg"
+                  disabled={isSubmitting}
+                  className={`btn-primary px-12 py-4 text-lg ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
-                  Submit Application
+                  {isSubmitting ? 'Submitting...' : 'Submit Application'}
                 </button>
               </div>
+              
+              {/* Status Messages */}
+              {submitStatus === 'success' && (
+                <div className="mt-6 p-6 bg-gradient-to-r from-green-50 to-emerald-50 border-l-4 border-green-400 rounded-lg shadow-lg">
+                  <div className="flex items-center">
+                    <div className="flex-shrink-0">
+                      <svg className="w-8 h-8 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    <div className="ml-4">
+                      <h3 className="text-lg font-semibold text-green-800">Application Submitted Successfully!</h3>
+                      <p className="text-green-700 mt-1">Thank you for your application! We will review your submission and get back to you soon.</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              {submitStatus === 'error' && (
+                <div className="mt-6 p-6 bg-gradient-to-r from-red-50 to-rose-50 border-l-4 border-red-400 rounded-lg shadow-lg">
+                  <div className="flex items-center">
+                    <div className="flex-shrink-0">
+                      <svg className="w-8 h-8 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    <div className="ml-4">
+                      <h3 className="text-lg font-semibold text-red-800">Submission Failed</h3>
+                      <p className="text-red-700 mt-1">{formData.preferences.length === 0 ? 'Please select at least one team preference before submitting.' : 'Something went wrong. Please try again later.'}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
             </form>
           </div>
         </div>
@@ -339,29 +406,35 @@ const Induction = () => {
         <div className="container-max section-padding">
           <div className="max-w-4xl mx-auto text-center">
             <h2 className="text-3xl font-bold text-gray-900 mb-6">What to Expect</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              <div className="bg-white p-6 rounded-lg shadow-lg">
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+              <div className="bg-white p-6 rounded-lg shadow-lg text-center relative">
+                <div className="absolute -top-3 -left-3 w-8 h-8 bg-yellow-400 text-black font-bold rounded-full flex items-center justify-center text-sm">1</div>
                 <div className="text-3xl mb-4">📝</div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-3">Application Review</h3>
-                <p className="text-gray-600">
-                  Our team will carefully review your application and responses to assess your fit for the deputy member role.
-                </p>
+                <h3 className="text-xl font-semibold text-gray-900">Application Review</h3>
               </div>
               
-              <div className="bg-white p-6 rounded-lg shadow-lg">
+              <div className="bg-white p-6 rounded-lg shadow-lg text-center relative">
+                <div className="absolute -top-3 -left-3 w-8 h-8 bg-yellow-400 text-black font-bold rounded-full flex items-center justify-center text-sm">2</div>
+                <div className="text-3xl mb-4">📋</div>
+                <h3 className="text-xl font-semibold text-gray-900">Pre-Induction Task</h3>
+              </div>
+              
+              <div className="bg-white p-6 rounded-lg shadow-lg text-center relative">
+                <div className="absolute -top-3 -left-3 w-8 h-8 bg-yellow-400 text-black font-bold rounded-full flex items-center justify-center text-sm">3</div>
+                <div className="text-3xl mb-4">💬</div>
+                <h3 className="text-xl font-semibold text-gray-900">Ground Discussion</h3>
+              </div>
+              
+              <div className="bg-white p-6 rounded-lg shadow-lg text-center relative">
+                <div className="absolute -top-3 -left-3 w-8 h-8 bg-yellow-400 text-black font-bold rounded-full flex items-center justify-center text-sm">4</div>
                 <div className="text-3xl mb-4">🗣️</div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-3">Interview Process</h3>
-                <p className="text-gray-600">
-                  Shortlisted candidates will be invited for an interview to discuss their vision and commitment to Taskforce.
-                </p>
+                <h3 className="text-xl font-semibold text-gray-900">PI (Personal Interview)</h3>
               </div>
               
-              <div className="bg-white p-6 rounded-lg shadow-lg">
+              <div className="bg-white p-6 rounded-lg shadow-lg text-center relative">
+                <div className="absolute -top-3 -left-3 w-8 h-8 bg-yellow-400 text-black font-bold rounded-full flex items-center justify-center text-sm">5</div>
                 <div className="text-3xl mb-4">🎉</div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-3">Welcome Aboard</h3>
-                <p className="text-gray-600">
-                  Selected deputy members will be welcomed into the Taskforce family and begin their journey of making student life easier.
-                </p>
+                <h3 className="text-xl font-semibold text-gray-900">Welcome Aboard</h3>
               </div>
             </div>
           </div>
@@ -373,7 +446,7 @@ const Induction = () => {
         <div className="container-max section-padding">
           <div className="text-center">
             <h2 className="text-3xl md:text-4xl font-bold text-black mb-4">
-              Ready to Make a Difference?
+              Join Taskforce Today
             </h2>
             <p className="text-xl text-gray-900 mb-8 max-w-2xl mx-auto">
               Join Taskforce as a deputy member and help us create a better student experience at NIT Trichy.

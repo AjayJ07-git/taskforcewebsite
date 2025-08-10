@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
+import Logo from '../../assests/LOGO.png'
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false)
@@ -18,13 +19,11 @@ const Navbar = () => {
 
   return (
     <nav className="bg-white shadow-lg sticky top-0 z-50">
-      <div className="container-max">
+      <div className="container-max px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center py-4">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-yellow-400 rounded-full flex items-center justify-center">
-              <span className="text-black font-bold text-xl">T</span>
-            </div>
+            <img src={Logo} alt="Taskforce logo" className="w-16 h-16 object-contain" />
             <div>
               <h1 className="text-xl font-bold text-gray-900">Taskforce</h1>
               <p className="text-sm text-gray-600">NIT Trichy</p>
